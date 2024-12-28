@@ -18,12 +18,11 @@ def process_image(image, canny_threshold1, canny_threshold2, epsilon):
     # Simplify contours
     simplified_contours = [cv2.approxPolyDP(cnt, epsilon, closed=True) for cnt in contours]
 
-    # Draw dots and numbers
-    for i, cnt in enumerate(simplified_contours):
-        for j, point in enumerate(cnt):
+    # Draw dots
+    for cnt in simplified_contours:
+        for point in cnt:
             x, y = point[0]
-            cv2.circle(image, (x, y), 3, (0, 0, 255), -1)
-            cv2.putText(image, str(j+1), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
+            cv2.circle(image, (x, y), 3, (0, 0, 0), -1)  # Draw black dots
 
     return image
 
