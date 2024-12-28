@@ -9,6 +9,9 @@ def process_image(image, canny_threshold1, canny_threshold2, epsilon):
     image = np.array(image)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+    # Create an alpha channel with full transparency
+    alpha_channel = np.ones(gray.shape, dtype=gray.dtype) * 255
+
     # Edge detection
     edges = cv2.Canny(gray, canny_threshold1, canny_threshold2)
 
@@ -22,9 +25,12 @@ def process_image(image, canny_threshold1, canny_threshold2, epsilon):
     for cnt in simplified_contours:
         for point in cnt:
             x, y = point[0]
-            cv2.circle(image, (x, y), 3, (0, 0, 0), -1)  # Draw black dots
+            cv2.circle(alpha_channel, (x, y), 3, (0, 0, 0), -1)  # Draw black dots on alpha channel
 
-    return image
+    # Merge the grayscale image with the alpha channel
+    transparent_image = cv2.merge([gray, gray, gray, alpha_channel])
+
+    return transparent_image
 
 st.title("Advanced Dot-to-Dot Image Converter")
 
@@ -47,12 +53,12 @@ if uploaded_file is not None:
     # Convert processed image to PIL format for download
     processed_image_pil = Image.fromarray(processed_image)
     buf = io.BytesIO()
-    processed_image_pil.save(buf, format="JPEG")
+    processed_image_pil.save(buf, format="PNG")
     byte_im = buf.getvalue()
 
     st.download_button(
         label="Download Processed Image",
         data=byte_im,
-        file_name="dot_to_dot_image.jpg",
-        mime="image/jpeg"
+        file_name="dot_to_dot_image.png",
+        mime="image/png"
     )
