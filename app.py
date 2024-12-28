@@ -2,20 +2,21 @@ import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
+import io
 
-def process_image(image):
+def process_image(image, canny_threshold1, canny_threshold2, epsilon):
     # Convert PIL image to OpenCV format
     image = np.array(image)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Edge detection
-    edges = cv2.Canny(gray, 50, 150)
+    edges = cv2.Canny(gray, canny_threshold1, canny_threshold2)
 
     # Find contours
     contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Simplify contours
-    simplified_contours = [cv2.approxPolyDP(cnt, epsilon=5, closed=True) for cnt in contours]
+    simplified_contours = [cv2.approxPolyDP(cnt, epsilon, closed=True) for cnt in contours]
 
     # Draw dots and numbers
     for i, cnt in enumerate(simplified_contours):
@@ -26,7 +27,7 @@ def process_image(image):
 
     return image
 
-st.title("Dot-to-Dot Image Converter")
+st.title("Advanced Dot-to-Dot Image Converter")
 
 uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
@@ -34,7 +35,25 @@ if uploaded_file is not None:
     image = Image.open(uploaded_file)
     st.image(image, caption='Uploaded Image.', use_column_width=True)
     st.write("")
-    st.write("Processing...")
 
-    processed_image = process_image(image)
+    st.sidebar.header("Adjust Parameters")
+    canny_threshold1 = st.sidebar.slider("Canny Threshold 1", 0, 255, 50)
+    canny_threshold2 = st.sidebar.slider("Canny Threshold 2", 0, 255, 150)
+    epsilon = st.sidebar.slider("Contour Approximation Epsilon", 1, 30, 5)
+
+    st.write("Processing...")
+    processed_image = process_image(image, canny_threshold1, canny_threshold2, epsilon)
     st.image(processed_image, caption='Processed Image.', use_column_width=True)
+
+    # Convert processed image to PIL format for download
+    processed_image_pil = Image.fromarray(processed_image)
+    buf = io.BytesIO()
+    processed_image_pil.save(buf, format="JPEG")
+    byte_im = buf.getvalue()
+
+    st.download_button(
+        label="Download Processed Image",
+        data=byte_im,
+        file_name="dot_to_dot_image.jpg",
+        mime="image/jpeg"
+    )
